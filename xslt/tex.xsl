@@ -368,12 +368,27 @@
     <xsl:template match="tei:rs">
         <xsl:call-template name="add-space-before"/>
         <xsl:variable name="rstype" select="@type"/>
-        <xsl:variable name="rsid" select="substring-after(@ref, '#')"/>
-        <xsl:variable name="ent" select="root()//tei:back//*[@xml:id=$rsid]"/>
+        <xsl:variable name="refs" select="tokenize(@ref, '\s+')"/>
+        <xsl:variable name="back" select="root()//tei:back"/>
+        
+        <xsl:for-each select="$refs">
+        <xsl:variable name="rsid" select="substring-after(., '#')"/>
+        <xsl:variable name="ent" select="$back//*[@xml:id=$rsid]"/>
         <xsl:variable name="idxlabel" select="$ent/*[contains(name(), 'Name')][1]"/>
         <xsl:value-of select="'\index['||$rstype||']{'||$idxlabel||'} '"/>
+        </xsl:for-each>
+
         <xsl:apply-templates/>
         <xsl:variable name="footnotetext">
+         <xsl:for-each select="$refs">
+        <xsl:variable name="rsid" select="substring-after(., '#')"/>
+        <xsl:variable name="ent" select="$back//*[@xml:id=$rsid]"/>
+        <xsl:variable name="idxlabel" select="$ent/*[contains(name(), 'Name')][1]"/>
+        
+        <xsl:if test="position() > 1">
+            <xsl:text>;\newline </xsl:text>
+        </xsl:if>
+        
             <xsl:choose>
                 <xsl:when test="$rstype = 'person'">
                     <xsl:variable name="birth" select="$ent/tei:birth/tei:date"/>
@@ -419,6 +434,7 @@
                     <xsl:value-of select="$idxlabel"/>
                 </xsl:otherwise>
             </xsl:choose>
+            </xsl:for-each>
         </xsl:variable>
         <xsl:text>\footnote{</xsl:text>
         <xsl:value-of select="$footnotetext"/>
